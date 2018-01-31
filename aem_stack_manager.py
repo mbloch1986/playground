@@ -22,8 +22,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(int(os.getenv('LOG_LEVEL', logging.INFO)))
 
 # AWS resources
-ssm = boto3.client('ssm')
-ec2 = boto3.client('ec2')
 s3 = boto3.client('s3')
 dynamodb = boto3.client('dynamodb')
 
