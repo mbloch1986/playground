@@ -1,15 +1,15 @@
 ---
 
 - name: Deploy AEM Snapshots Purge Cloud Native Solution
-  hosts: all
+  hosts: localhost
   gather_facts: no
   connection: local
 
   tasks:
     - name: Create Stack Manager configuration
       stack_manager_config:
-        Stack_prefix: "AEM63-Full-Set"
-        Stack_name: "Stack-Manager"
+        AEM_stack_name: "michaelb-aem63"
+        SSM_stack_name: "aem-stack-manager-ssm"
         S3Bucket: "AEM-Bucket"
         S3Folder: "AEM63/StackManager"
         TaskStatusTopicArn: "arn:aws:sns:region:account-id:TaskStatusTopicArn"
@@ -18,5 +18,5 @@
         S3PrefixSSMOutput: "AEM63/StackManager/SSMOutput"
         BackupTopicArn: "arn:aws:sns:region:account-id:BackupTopicArn"
         DynamoDBTableName: "AEM63-Full-Set-Stack-Manager-Table"
-        State: present
+        state: present
       register: result
