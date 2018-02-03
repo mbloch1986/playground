@@ -10,8 +10,8 @@
       stack_manager_config:
         AEM_stack_name: "michaelb-aem63"
         SSM_stack_name: "aem-stack-manager-ssm"
-        S3Bucket: "AEM-Bucket"
-        S3Folder: "AEM63/StackManager"
+        S3Bucket: "aem-stack-builder"
+        S3Folder: "michaelb-aem63/stack-manager"
         TaskStatusTopicArn: "arn:aws:sns:region:account-id:TaskStatusTopicArn"
         SSMServiceRoleArn: "arn:aws:iam::account-id:role/role-name"
         S3BucketSSMOutput: "AEM-Bucket"

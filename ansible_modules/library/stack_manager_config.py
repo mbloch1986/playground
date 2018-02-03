@@ -9,7 +9,6 @@ Ansible module for creating AEM Stack Manager Lambda configuration file
 requirements:
   - boto3 >= 1.0.0
   - python >= 2.6
-author: Michael Bloch
 options: 
     AEM_stack_name:
         description:
@@ -92,6 +91,7 @@ EXAMPLES = '''
 
 import os
 import sys
+import tempfile
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
@@ -111,11 +111,14 @@ class config:
     def __init__(self, module):
         self.module = module
 
-    def s3_upload(self, tmp_file, ssm_stack_name, s3bucket, s3folder):
-        try: 
-            config_file = 'config.json'
-            upload_path = ssm_stack_name + '/' + s3folder  + '/' + config_path
-            s3_bucket_connection = s3_connection.Bucket(s3_bucket)
+    def s3_upload(self, argument_spec, s3_connection, tmp_file):
+        s3bucket = self.module.params.get("S3Bucket")
+        s3folder = self.module.params.get("S3Folder")
+        config_file = 'config.json'
+
+        try:
+            upload_path = s3folder  + '/' + config_file
+            s3_bucket_connection = s3_connection.Bucket(s3bucket)
             s3_bucket_connection.upload_file(tmp_file, upload_path)
         except Exception as e:
             self.module.fail_json(msg="Error: Can't upload configuration file - " + str(e), exception=traceback.format_exc(e))
@@ -129,11 +132,8 @@ class config:
         except Exception as e:
             self.module.fail_json(msg="Error: Can not establish connection - " + str(e), exception=traceback.format_exc(e))
 
-    def create(self, argument_spec, stack_outputs, tmp_file):
+    def create(self, argument_spec, stack_outputs, s3_connection):
         stack_name = self.module.params.get("AEM_stack_name")
-        ssm_stack_name = self.module.params.get("SSM_stack_name")
-        s3bucket = self.module.params.get("S3Bucket")
-        s3folder = self.module.params.get("S3Folder")
         taskstatustopicarn = self.module.params.get("TaskStatusTopicArn")
         ssmservicerolearn = self.module.params.get("SSMServiceRoleArn")
         s3bucketssmoutput = self.module.params.get("S3BucketSSMOutput")
@@ -192,19 +192,15 @@ class config:
             ec2_run_command.update(messenger_dict)
             ec2_run_command.update(offline_snapshot)
             # Create temp configuration
-            with open(tmp_file, 'w') as file:
-                json.dump( ec2_run_command, file, indent=2 )
-                
+            with tempfile.NamedTemporaryFile() as tmp_file:
+                with open(tmp_file.name, 'w') as file:
+                    json.dump( ec2_run_command, file, indent=2)
+                config.s3_upload(self, argument_spec, s3_connection, tmp_file.name)
+
             result = ec2_run_command
             changed = True
-
         except Exception, e:
             self.module.fail_json(msg="Error: Could not create JSON Configfile - " + str(e))
-
-
-        #s3_upload(self, tmp_file, ssm_stack_name, s3bucket, s3folder)
-        #os.remove(tmp_file)
-
 
         self.module.exit_json(changed=changed, stack_manager_config=result)
         
@@ -258,7 +254,7 @@ def main():
     else:
         module.fail_json(msg="Error: region must be specified")
 
-    tmp_file = '/tmp/templist.json'
+    #tmp_file = '../../stage/templist.json'
     state = module.params.get("state")
     stack_name = module.params.get("AEM_stack_name")
     ssm_stack_name = module.params.get("SSM_stack_name")
@@ -268,7 +264,7 @@ def main():
         
         stack_outputs = stack_manager_config.describe_ssmdocument_stack(cf_connection, stack_name, ssm_stack_name)
 
-        stack_manager_config.create(argument_spec, stack_outputs, tmp_file)
+        stack_manager_config.create(argument_spec, stack_outputs, s3_connection)
 
     elif state == 'absent':
         stack_manager_config = config(module)
