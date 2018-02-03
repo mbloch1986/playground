@@ -72,21 +72,6 @@ EXAMPLES = '''
     DynamoDBTableName: "AEM63-Full-Set-Stack-Manager-Table"
     state: present
   register: result
-
-- name: Delete Stack Manager configuration
-  stack_manager_config:
-    AEM_stack_name: AEM63-Full-Set
-    SSM_stack_name: "AEM63-Full-Set-aem-stack-manager-ssm"
-    S3Bucket: "AEM-Bucket"
-    S3Folder: "AEM63/StackManager"
-    TaskStatusTopicArn: arn:aws:sns:region:account-id:TaskStatusTopicArn
-    SSMServiceRoleArn: arn:aws:iam::account-id:role/role-name
-    S3BucketSSMOutput: "AEM-Bucket"
-    S3PrefixSSMOutput: "AEM63/StackManager/SSMOutput"
-    BackupTopicArn: "arn:aws:sns:region:account-id:BackupTopicArn"
-    DynamoDBTableName: "AEM63-Full-Set-Stack-Manager-Table"
-    state: absent
-  register: result
 '''
 
 import os
@@ -203,18 +188,6 @@ class config:
             self.module.fail_json(msg="Error: Could not create JSON Configfile - " + str(e))
 
         self.module.exit_json(changed=changed, stack_manager_config=result)
-        
-    def delete(self):
-        try: 
-            os.remove(tmp_file)
-            changed = True
-            return changed
-        except Exception, e:
-            self.module.fail_json(msg="Error: Could not delete JSON Configfile -" + str(e))
-            changed = False
-            return changed
-
-
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -267,8 +240,6 @@ def main():
         stack_manager_config.create(argument_spec, stack_outputs, s3_connection)
 
     elif state == 'absent':
-        stack_manager_config = config(module)
-        changed = stack_manager_config.delete()
         module.exit_json(changed=changed)
 
 if __name__ == '__main__':  
