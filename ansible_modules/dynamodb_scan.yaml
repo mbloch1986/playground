@@ -1,0 +1,17 @@
+---
+
+- name: Deploy AEM Snapshots Purge Cloud Native Solution
+  hosts: localhost
+  gather_facts: no
+  connection: local
+
+  tasks:
+    - name: Create Stack Manager configuration
+      dynamodb_search:
+        table_name: "michaelb-aem63-AemStackManagerTable"
+        attribute: "message_id"
+        attribute_value: "456"
+        get_attribute: "command_id"
+        select: "SPECIFIC_ATTRIBUTES"
+        comparisonoperator: "EQ"
+        state: scan
