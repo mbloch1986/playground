@@ -10,8 +10,30 @@
       dynamodb_search:
         table_name: "michaelb-aem63-AemStackManagerTable"
         attribute: "message_id"
-        attribute_value: "456"
+        attribute_value: "281a68cf-4eae-53f9-8604-3a3b7e1daadc"
         get_attribute: "command_id"
         select: "SPECIFIC_ATTRIBUTES"
         comparisonoperator: "EQ"
         state: scan
+      register: dbscan
+
+    - set_fact:
+        cmd_id: "{{ item.command_id.S }}"
+      with_items:
+        "{{ dbscan.item }}"
+
+    - name: Query state
+      dynamodb_search:
+        table_name: "michaelb-aem63-AemStackManagerTable"
+        attribute: "command_id"
+        attribute_value: "{{ cmd_id }}"
+        #attribute_value: "41b04441-d3d6-418a-9dd2-ee898b695fae"
+        get_attribute: "state"
+        select: "SPECIFIC_ATTRIBUTES"
+        comparisonoperator: "EQ"
+        state: query
+      register: dbquery
+
+    - name: Debug
+      debug:
+        msg: "{{ dbquery }}"
